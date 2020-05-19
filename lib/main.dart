@@ -7,6 +7,9 @@ import 'covidState.dart';
 import 'covidCounty.dart';
 import 'screenData.dart';
 
+
+
+
 class Place{
   final String ZIP;
   final String county;
