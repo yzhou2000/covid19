@@ -1,36 +1,57 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'covidMetro.dart';
 import 'covidState.dart';
 import 'covidCounty.dart';
 import 'screenData.dart';
+import 'package:http/http.dart' as http;
 
+class IP_info{
+  final String IP;
+  final String city;
+  final String ZIP;
+  final String st_code;
+  final String state_name;
+  final String country_code;
+  final String country_name;
 
+  IP_info({this.IP, this.city, this.st_code,this.ZIP,this.state_name,this.country_code,this.country_name});
 
+  factory IP_info.fromJson(Map<String, dynamic> json){
+    return IP_info(
+      IP:json['ip'],
+      ZIP:json['zip'],
+      city:json['city'],
+      country_code:json['country_code'],
+      st_code:json['region_code'],
+      country_name:json['country_name'],
+      state_name:json['region_name'],
+    );
+  }
+  @override
+  String toString() {
+    return 'Your current location { IP : $IP , ZIP : $ZIP, City :$city , State: $st_code,Country: $country_code }';
+  }
+}
 
 class Place{
   final String ZIP;
   final String county;
-  final String st_code;
   final String msa;
-  final String state_name;
 
-  Place({this.ZIP, this.county, this.st_code,this.msa,this.state_name});
+  Place({this.ZIP, this.county, this.msa});
 
   factory Place.fromJson(Map<String, dynamic> json){
     return Place(
       ZIP:json['ZIP'],
       county:json['county'],
-      st_code:json['st_code'],
       msa:json['msa'],
-      state_name:json['state'],
     );
   }
   @override
   String toString() {
-    return 'Your current location { County: $county,State: $st_code, MSA : $msa  State_name : $state_name}';
+    return 'Your current location { County: $county, MSA : $msa  }';
   }
 }
 
@@ -48,11 +69,9 @@ class MyApp extends StatefulWidget{
   State<StatefulWidget> createState()  => MyAppState();
 }
 
-
 class MyAppState extends State<MyApp> {
 
-  final Geolocator geolocator = Geolocator()
-    ..forceAndroidLocationManager;
+ // final Geolocator geolocator = Geolocator()..forceAndroidLocationManager;
   String _zip;
   String _city;
   String _county;
@@ -60,55 +79,49 @@ class MyAppState extends State<MyApp> {
   String _state_name;
   String _msa;
   ScreenData _args;
-  Position _currentPosition;
   String _currentAddress = "not known";
   bool _isLoading = false;
-
+  IP_info ip_info;
 
   @override
   void initState() {
       _isLoading=true;
-      _getCurrentLocation();
+      //_getCurrentLocation();
+     _getPublicIP();
   }
 
-  _getCurrentLocation() {
-    geolocator
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
-        .then((Position position) {
-      setState(() {
-        _currentPosition = position;
-      });
-
-      _getAddressFromLatLng();
-    }).catchError((e) {
-      print(e.toString());
-    });
-  }
-
-  _getAddressFromLatLng() async {
+_getPublicIP() async {
     try {
-      List<Placemark> p = await geolocator.placemarkFromCoordinates(
-          _currentPosition.latitude, _currentPosition.longitude);
-      Placemark place = p[0];
-      setState(() {
-        _zip = "${place.postalCode}";
-        _city = "${place.locality}";
-        _currentAddress ="${place.locality}, ${place.postalCode}, ${place.country}";
-      });
+      const url = 'http://api.ipstack.com/check?access_key=59d1a13ca47d85f624da51aec4b53449&format=1';
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        ip_info =  IP_info.fromJson(json.decode(response.body));
+        setState(() {
+          _zip = "${ip_info.ZIP}";
+          _city = "${ip_info.city}";
+          _state = "${ip_info.st_code}";
+          _state_name = "${ip_info.state_name}";
 
-      List<Place> uszip = await fetchPlace();
+          _currentAddress ="${ip_info.city}, ${ip_info.st_code} ${ip_info.ZIP}, ${ip_info.country_code}";
+        });
 
-      Place _currentArea = uszip.firstWhere((i) => i.ZIP == _zip);
-      setState(() {
-        _county = "${_currentArea.county}";
-        _msa = "${_currentArea.msa}";
-        _state = "${_currentArea.st_code}";
-        _state_name = "${_currentArea.state_name}";
-        _isLoading = false;
-         _args=ScreenData(_county,_state,_msa,_state_name);
-      });
+        List<Place> uszip = await fetchPlace();
+
+        Place _currentArea = uszip.firstWhere((i) => i.ZIP == _zip);
+        setState(() {
+          _county = "${_currentArea.county}";
+          _msa = "${_currentArea.msa}";
+          _isLoading = false;
+          _args=ScreenData(_county,_state,_msa,_state_name);
+        });
+      }
+      else {
+        // The request failed with a non-200 code
+        print(response.statusCode);
+        print(response.body);
+      }
     } catch (e) {
-      print(e.toString());
+      print(e);
     }
   }
 

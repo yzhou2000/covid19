@@ -81,7 +81,7 @@ Future<List<CovidMetro>> fetchCovidMetro(http.Client client, String _msa) async 
         CovidMetro.fromJson(json)).toList();
     List<CovidMetro> returnList = responseList.where((covid) =>
     (covid.msa == _msa && DateTime.parse(covid.casedate).isAfter(
-        DateTime.now().add(Duration(days: -9))))).toList();
+        DateTime.now().add(Duration(days: -15))))).toList();
     returnList.sort((a, b) => b.casedate.compareTo(a.casedate));
     return returnList;
   } else {

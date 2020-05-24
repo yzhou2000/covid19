@@ -82,7 +82,7 @@ Future<List<CovidCounty>> fetchCovidCounty(http.Client client, String _state, St
     List<CovidCounty> responseList = parsed.map<CovidCounty>((json) =>
         CovidCounty.fromJson(json)).toList();
     List<CovidCounty> returnList = responseList.where((covid) =>
-    (covid.county == _county && DateTime.parse(covid.casedate).isAfter(DateTime.now().add(Duration(days: -9))))).toList();
+    (covid.county == _county && DateTime.parse(covid.casedate).isAfter(DateTime.now().add(Duration(days: -15))))).toList();
     returnList.sort((a,b) => b.casedate.compareTo(a.casedate));
     return returnList;
   } else {
