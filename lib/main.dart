@@ -72,12 +72,12 @@ class MyApp extends StatefulWidget{
 class MyAppState extends State<MyApp> {
 
  // final Geolocator geolocator = Geolocator()..forceAndroidLocationManager;
-  String _zip;
-  String _city;
-  String _county;
-  String _state;
-  String _state_name;
-  String _msa;
+  String _zip = '38017';
+  String _city ='Collierville';
+  String _county = 'Shelby';
+  String _state ='TN';
+  String _state_name ='Tennessee';
+  String _msa ='Memphis';
   ScreenData _args;
   String _currentAddress = "not known";
   bool _isLoading = false;
@@ -85,14 +85,17 @@ class MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-      _isLoading=true;
+    //  _isLoading=true;
       //_getCurrentLocation();
-     _getPublicIP();
+   //  _getPublicIP();
+    _args=ScreenData(_county,_state,_msa,_state_name);
   }
 
 _getPublicIP() async {
     try {
+
       const url = 'http://api.ipstack.com/check?access_key=59d1a13ca47d85f624da51aec4b53449&format=1';
+
       final response = await http.get(url);
       if (response.statusCode == 200) {
         ip_info =  IP_info.fromJson(json.decode(response.body));
@@ -101,17 +104,17 @@ _getPublicIP() async {
           _city = "${ip_info.city}";
           _state = "${ip_info.st_code}";
           _state_name = "${ip_info.state_name}";
+          _isLoading = false;
 
           _currentAddress ="${ip_info.city}, ${ip_info.st_code} ${ip_info.ZIP}, ${ip_info.country_code}";
         });
-
         List<Place> uszip = await fetchPlace();
 
         Place _currentArea = uszip.firstWhere((i) => i.ZIP == _zip);
         setState(() {
           _county = "${_currentArea.county}";
           _msa = "${_currentArea.msa}";
-          _isLoading = false;
+         // _isLoading = false;
           _args=ScreenData(_county,_state,_msa,_state_name);
         });
       }
