@@ -8,30 +8,26 @@ import 'screenData.dart';
 import 'package:http/http.dart' as http;
 
 class IP_info{
-  final String IP;
   final String city;
   final String ZIP;
-  final String st_code;
   final String state_name;
   final String country_code;
   final String country_name;
 
-  IP_info({this.IP, this.city, this.st_code,this.ZIP,this.state_name,this.country_code,this.country_name});
+  IP_info({this.city, this.ZIP,this.state_name,this.country_code,this.country_name});
 
   factory IP_info.fromJson(Map<String, dynamic> json){
     return IP_info(
-      IP:json['ip'],
-      ZIP:json['zip'],
+      ZIP:json['postal'],
       city:json['city'],
       country_code:json['country_code'],
-      st_code:json['region_code'],
       country_name:json['country_name'],
-      state_name:json['region_name'],
+      state_name:json['state'],
     );
   }
   @override
   String toString() {
-    return 'Your current location { IP : $IP , ZIP : $ZIP, City :$city , State: $st_code,Country: $country_code }';
+    return 'Your current location { ZIP : $ZIP, City :$city , State: $state_name,Country: $country_code }';
   }
 }
 
@@ -39,19 +35,23 @@ class Place{
   final String ZIP;
   final String county;
   final String msa;
+  final String st_code;
+  final String st_name;
 
-  Place({this.ZIP, this.county, this.msa});
+  Place({this.ZIP, this.county, this.msa, this.st_code,this.st_name});
 
   factory Place.fromJson(Map<String, dynamic> json){
     return Place(
       ZIP:json['ZIP'],
       county:json['county'],
       msa:json['msa'],
+      st_code:json['st_code'],
+      st_name:json['state'],
     );
   }
   @override
   String toString() {
-    return 'Your current location { County: $county, MSA : $msa  }';
+    return 'Your current location { County: $county, MSA : $msa, ST_Code : $st_code, ST_name : $st_name }';
   }
 }
 
@@ -63,72 +63,36 @@ void main() {
   );
 }
 
-
 class MyApp extends StatefulWidget{
   @override
   State<StatefulWidget> createState()  => MyAppState();
 }
 
 class MyAppState extends State<MyApp> {
-
- // final Geolocator geolocator = Geolocator()..forceAndroidLocationManager;
-  String _zip = '38017';
-  String _city ='Collierville';
-  String _county = 'Shelby';
-  String _state ='TN';
-  String _state_name ='Tennessee';
-  String _msa ='Memphis';
-  ScreenData _args;
-  String _currentAddress = "not known";
-  bool _isLoading = false;
+  Future<Place> futurePlace;
   IP_info ip_info;
+  ScreenData _args;
 
   @override
   void initState() {
-    //  _isLoading=true;
-      //_getCurrentLocation();
-   //  _getPublicIP();
-    _args=ScreenData(_county,_state,_msa,_state_name);
+    super.initState();
+    futurePlace = fetchLocation(http.Client());
   }
 
-_getPublicIP() async {
-    try {
-
-      const url = 'http://api.ipstack.com/check?access_key=59d1a13ca47d85f624da51aec4b53449&format=1';
-
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        ip_info =  IP_info.fromJson(json.decode(response.body));
-        setState(() {
-          _zip = "${ip_info.ZIP}";
-          _city = "${ip_info.city}";
-          _state = "${ip_info.st_code}";
-          _state_name = "${ip_info.state_name}";
-          _isLoading = false;
-
-          _currentAddress ="${ip_info.city}, ${ip_info.st_code} ${ip_info.ZIP}, ${ip_info.country_code}";
-        });
-        List<Place> uszip = await fetchPlace();
-
-        Place _currentArea = uszip.firstWhere((i) => i.ZIP == _zip);
-        setState(() {
-          _county = "${_currentArea.county}";
-          _msa = "${_currentArea.msa}";
-         // _isLoading = false;
-          _args=ScreenData(_county,_state,_msa,_state_name);
-        });
-      }
-      else {
-        // The request failed with a non-200 code
-        print(response.statusCode);
-        print(response.body);
-      }
-    } catch (e) {
-      print(e);
+  Future<Place> fetchLocation(http.Client client ) async {
+    String url = 'https://geolocation-db.com/json/';
+    final response = await client.get(url);
+    List<Place> uszip = await fetchMSA();
+    if (response.statusCode == 200) {
+      ip_info = IP_info.fromJson(json.decode(response.body));
+      return uszip.firstWhere((i) => i.ZIP == ip_info.ZIP);
+    }
+    else {
+      throw Exception('Failed to load IP Address');
     }
   }
 
-  Future<List<Place>> fetchPlace() async {
+  Future<List<Place>> fetchMSA() async {
     //_getCurrentLocation();
     String data = await DefaultAssetBundle.of(context).loadString(
         "jsons/Place.json");
@@ -142,74 +106,79 @@ _getPublicIP() async {
   Widget build(BuildContext context) {
     return  Scaffold(
         appBar: AppBar(title: Text('The COVID-19 Cases Near You'),    ),
-          body: Container(
-                padding: const EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                color: Colors.white,
-                ),
-              child: _isLoading? Center(
-                        child: Column(children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 10,),
-                          Text("Loading your location infomation ...", style: TextStyle(color: Colors.blueAccent),),
-                            ]
-                          )
-                         )
-                          : new Column(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.center ,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: <Widget> [
-                                     Text('You are in $_city $_state, which is in $_county County ',
-                                       style: TextStyle(
-                                         fontWeight: FontWeight.bold,),
-                                        ),
-                                     SizedBox(height: 100,),
-                                     RaisedButton(
-                                       onPressed: () {
-                                         Navigator.push(context,
-                                           MaterialPageRoute(builder: (context) => CovidCountysList(),
-                                                 settings: RouteSettings(
-                                               arguments: _args,
-                                             ),
-                                              )
-                                         );
-                                       },
-                                       child: Text("Check COVID-19 cases in $_county County",
-                                         style: TextStyle(fontSize: 14.0,),),
-                                     ),
-                                   SizedBox(height: 10,),
-                                    RaisedButton(
-                                      onPressed: () {
-                                        Navigator.push(context,
-                                            MaterialPageRoute(builder: (context) => CovidStatesList(),
-                                              settings: RouteSettings(
-                                                arguments: _args,
-                                              ),
-                                            )
-                                        );
-                                      },
-                                      child: Text("Check COVID-19 cases in $_state state",
-                                        style: TextStyle(fontSize: 14.0,),),
-                                    ),
-                                    SizedBox(height: 10,),
-                                    RaisedButton(
-                                      onPressed: () {
-                                        Navigator.push(context,
-                                            MaterialPageRoute(builder: (context) => CovidMetrosList(),
-                                        settings: RouteSettings(
-                                        arguments: _args,
-                                        ),
-                                        )
-                                        );
-                                      },
-                                      child: Text("Check COVID-19 cases in $_msa metra area",
-                                        style: TextStyle(fontSize: 14.0,),),
-                                    ),
-                              ],
-                              ),
-                            )
-                   );
-               }
+          body: Center(
+            child: FutureBuilder<Place>(
+              future: futurePlace,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return Container(
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                    ),
+                    child: new Column(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.center ,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget> [
+                        Text('Here is some COVID-19 case infomation in ${snapshot.data.county } county, ${snapshot.data.st_code}, and ${snapshot.data.msa} metro area',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,),
+                        ),
+                        SizedBox(height: 100,),
+                        RaisedButton(
+                          onPressed: () {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) => CovidCountysList(),
+                                  settings: RouteSettings(
+                                    arguments: ScreenData(snapshot.data.county, snapshot.data.st_code, snapshot.data.msa, snapshot.data.st_name),
+                                  ),
+                                )
+                            );
+                          },
+                          child: Text("Check COVID-19 cases in ${snapshot.data.county} County",
+                            style: TextStyle(fontSize: 14.0,),),
+                        ),
+                        SizedBox(height: 10,),
+                        RaisedButton(
+                          onPressed: () {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) => CovidStatesList(),
+                                  settings: RouteSettings(
+                                    arguments: ScreenData(snapshot.data.county, snapshot.data.st_code, snapshot.data.msa, snapshot.data.st_name),
+                                  ),
+                                )
+                            );
+                          },
+                          child: Text("Check COVID-19 cases in ${snapshot.data.st_code} state",
+                            style: TextStyle(fontSize: 14.0,),),
+                        ),
+                        SizedBox(height: 10,),
+                        RaisedButton(
+                          onPressed: () {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) => CovidMetrosList(),
+                                  settings: RouteSettings(
+                                    arguments: ScreenData(snapshot.data.county, snapshot.data.st_code, snapshot.data.msa, snapshot.data.st_name),
+                                  ),
+                                )
+                            );
+                          },
+                          child: Text("Check COVID-19 cases in ${snapshot.data.msa} metra area",
+                            style: TextStyle(fontSize: 14.0,),),
+                        ),
+                      ],
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                    return Text("${snapshot.error}");
+                }
+                // By default, show a loading spinner.
+                return CircularProgressIndicator();
+              },
+            ),
+      ),
+    );
+  }
 }
 

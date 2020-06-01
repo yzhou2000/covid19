@@ -9,7 +9,7 @@ app = firebase_admin.initialize_app(cred)
 store = firestore.client()
 
 file_path = "/home/yuzhou/AndroidStudioProjects/covid_json/Place.csv"
-collection_name = "covid19nearby"
+collection_name = "Place"
 
 
 def batch_data(iterable, n=1):
