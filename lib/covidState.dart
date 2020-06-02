@@ -9,23 +9,23 @@ import 'screenData.dart';
 /* Covid State level information */
 class CovidState {
   final String casedate;
-  final int confirmed;
+  final int cases;
   final int deaths;
+  final int newCases;
+  final int newDeaths;
   final String state_name;
 
-  CovidState({this.casedate,this.state_name, this.confirmed,this.deaths});
+  CovidState({this.casedate,this.state_name, this.cases,this.deaths, this.newCases, this.newDeaths});
 
   factory CovidState.fromJson(Map<String, dynamic> json) {
     return CovidState(
       casedate: json['date'],
       state_name:json['state'],
-      confirmed: json['cases'],
+      cases: json['cases'],
       deaths: json['deaths'],
-    );
-  }
-  @override
-  String toString() {
-    return 'Your current covid case info { State: $state_name, casedate : $casedate , confirmed case : $confirmed, deaths :$deaths }';
+      newCases:json['new cases'],
+      newDeaths:json['new deaths'],
+   );
   }
 }
 
@@ -57,7 +57,7 @@ class CovidStatesList extends StatelessWidget {
                     itemBuilder: (BuildContext context, int index) {
                       return Container(
                         height: 50,
-                        child: Center(child:  Text( 'As of ' + covidCases[index].casedate + ' ,' + covidCases[index].state_name + ' state has ' + covidCases[index].confirmed.toString() + ' cases, and ' + covidCases[index].deaths.toString() + ' deaths')),
+                        child: Center(child:  Text( 'As of ' + covidCases[index].casedate + ',' + covidCases[index].state_name + ' state has ' + covidCases[index].newCases.toString() + ' new cases and ' + covidCases[index].newDeaths.toString() + ' new deaths')),
                       );
                     }
                 );

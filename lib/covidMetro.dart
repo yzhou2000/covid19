@@ -9,24 +9,25 @@ import 'screenData.dart';
 
 class CovidMetro {
   final String casedate;
-  final int confirmed;
+  final int cases;
   final int deaths;
+  final int newCases;
+  final int newDeaths;
   final String msa;
 
-  CovidMetro({this.casedate,this.msa, this.confirmed,this.deaths});
+  CovidMetro({this.casedate,this.msa, this.cases,this.deaths, this.newCases, this.newDeaths});
 
   factory CovidMetro.fromJson(Map<String, dynamic> json) {
     return CovidMetro(
       casedate: json['date'],
       msa:json['msa'],
-      confirmed: json['cases'],
+      cases: json['cases'],
       deaths: json['deaths'],
+      newCases:json['new cases'],
+      newDeaths:json['new deaths'],
     );
   }
-  @override
-  String toString() {
-    return 'Your current covid case info { Metro: $msa, casedate : $casedate , confirmed case : $confirmed, deaths :$deaths }';
-  }
+
 }
 
 class CovidMetrosList extends StatelessWidget {
@@ -57,7 +58,7 @@ class CovidMetrosList extends StatelessWidget {
                     itemBuilder: (BuildContext context, int index) {
                       return Container(
                         height: 50,
-                        child: Center(child:  Text( 'As of ' + covidCases[index].casedate + ' ,' + covidCases[index].msa + ' metro has ' + covidCases[index].confirmed.toString() + ' cases, and ' + covidCases[index].deaths.toString() + ' deaths')),
+                        child: Center(child:  Text( 'As of ' + covidCases[index].casedate + ',' + covidCases[index].msa + ' metro has ' + covidCases[index].newCases.toString() + ' new cases and ' + covidCases[index].newDeaths.toString() + ' new deaths')),
                       );
                     }
                 );
