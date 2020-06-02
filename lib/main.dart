@@ -55,6 +55,7 @@ class Place{
   }
 }
 
+
 void main() {
   runApp(MaterialApp(
       title: 'Covid 19 cases near you',
