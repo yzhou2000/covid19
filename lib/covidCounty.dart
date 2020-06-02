@@ -8,26 +8,27 @@ import 'screenData.dart';
 /* Covid County level information */
 class CovidCounty {
   final String casedate;
-  final int confirmed;
+  final int cases;
   final int deaths;
+  final int newCases;
+  final int newDeaths;
   final String county;
   final String state_name;
 
-  CovidCounty({this.casedate,this.county,this.state_name, this.confirmed,this.deaths});
+  CovidCounty({this.casedate,this.county,this.state_name, this.cases,this.deaths, this.newCases, this.newDeaths});
 
   factory CovidCounty.fromJson(Map<String, dynamic> json) {
     return CovidCounty(
       casedate: json['date'],
       county:json['county'],
       state_name:json['state'],
-      confirmed: json['cases'],
+      cases: json['cases'],
       deaths: json['deaths'],
+      newCases:json['new cases'],
+      newDeaths:json['new deaths'],
     );
   }
-  @override
-  String toString() {
-    return 'Your current covid case info { County: $county,State: $state_name, casedate : $casedate , confirmed case : $confirmed, deaths :$deaths }';
-  }
+
 }
 
 class CovidCountysList extends StatelessWidget {
@@ -58,7 +59,7 @@ class CovidCountysList extends StatelessWidget {
                     itemBuilder: (BuildContext context, int index) {
                       return Container(
                         height: 50,
-                        child: Center(child:  Text( 'As of ' + covidCases[index].casedate + ' ,' + covidCases[index].county + ' county has ' + covidCases[index].confirmed.toString() + ' cases, and ' + covidCases[index].deaths.toString() + ' deaths')),
+                        child: Center(child:  Text( 'As of ' + covidCases[index].casedate + ',' + covidCases[index].county + ' county has ' + covidCases[index].newCases.toString() + ' new cases and ' + covidCases[index].newDeaths.toString() + ' new deaths')),
                       );
                     }
                 );
