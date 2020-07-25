@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'screenData.dart';
-
+import 'package:charts_flutter/flutter.dart' as charts;
 
 /* Covid State level information */
 class CovidState {
@@ -28,7 +28,82 @@ class CovidState {
    );
   }
 }
-
+class StateHome extends StatelessWidget {
+  
+  @override
+  Widget build(BuildContext context) {
+    final ScreenData screenargs= ModalRoute.of(context).settings.arguments;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Covid Statistics in ${screenargs.state}'),
+      ),
+      body: Center(
+        child: FutureBuilder(
+              builder: (context, snapshot) {
+                
+                  return Container(
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                    ),
+                    child: new Column(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.center ,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget> [
+                        Text('',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,),
+                        ),
+                        SizedBox(height: 100,),
+                        RaisedButton(
+                          onPressed: () {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) => CovidStatesList(),
+                                  settings: RouteSettings(
+                                    arguments: ScreenData(screenargs.county, screenargs.state, screenargs.msa, screenargs.state_name),
+                                  ),
+                                )
+                            );
+                          },
+                          child: Text("New Cases in ${screenargs.state}",
+                            style: TextStyle(fontSize: 14.0,),),
+                        ),
+                        SizedBox(height: 10,),
+                        RaisedButton(
+                          onPressed: () {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) => CovidStatesDeath(),
+                                  settings: RouteSettings(
+                                    arguments: ScreenData(screenargs.county, screenargs.state, screenargs.msa, screenargs.state_name),
+                                  ),
+                                )
+                            );
+                          },
+                          child: Text("New Deaths in ${screenargs.state}",
+                            style: TextStyle(fontSize: 14.0,),),
+                        ),
+                        SizedBox(height: 10,),
+                        RaisedButton(
+                          onPressed: () {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) => CovidStatesAllDeaths(),
+                                  settings: RouteSettings(
+                                    arguments: ScreenData(screenargs.county, screenargs.state, screenargs.msa, screenargs.state_name),
+                                  ),
+                                )
+                            );
+                          },
+                          child: Text("View All Deaths in ${screenargs.state}",
+                            style: TextStyle(fontSize: 14.0,),),
+                        ),
+                      ],
+                    ),
+                  );
+                }))); 
+                }
+                
+}
 class CovidStatesList extends StatelessWidget {
   List<CovidState> covidCases ;
 
@@ -51,22 +126,158 @@ class CovidStatesList extends StatelessWidget {
                 if(snapshot.hasError) {
                   return     Text("${snapshot.error}"); }
                 covidCases= snapshot.data ?? [];
-                return ListView.builder(
-                    padding: const EdgeInsets.all(8),
-                    itemCount: covidCases.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Container(
-                        height: 50,
-                        child: Center(child:  Text( 'As of ' + covidCases[index].casedate + ',' + covidCases[index].state_name + ' state has ' + covidCases[index].newCases.toString() + ' new cases and ' + covidCases[index].newDeaths.toString() + ' new deaths')),
-                      );
-                    }
-                );
-              }
-          )
-      );
-  }
-}
+                 List<charts.Series<CovidState, String>> series = [
+      charts.Series(
+          id: "New Cases in ${screenargs.county} County",
+          data: covidCases,
+          domainFn: (CovidState series, _) => series.casedate,
+          measureFn: (CovidState series, _) => series.newCases,
 
+    )];
+
+    return Container(
+      height: 400,
+      padding: EdgeInsets.all(20),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: <Widget>[
+              Text(
+                "New Cases in ${screenargs.state}",
+                style: Theme.of(context).textTheme.body2,
+              ),
+              Expanded(
+                child: charts.BarChart(series, animate: true,
+                domainAxis: charts.OrdinalAxisSpec(
+                              renderSpec: charts.SmallTickRendererSpec(labelRotation: 60),
+              )
+              )
+              )],
+          ),
+        ),
+      ),
+    );
+              }));
+          }
+                      
+                    }
+class CovidStatesAllDeaths extends StatelessWidget {
+  List<CovidState> covidCases ;
+
+
+  CovidStatesAllDeaths({Key key, @required this.covidCases}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+
+    final ScreenData screenargs= ModalRoute.of(context).settings.arguments;
+    return
+      new Scaffold(
+          appBar: AppBar(title: Text("${screenargs.state} Covid status"),),
+          body:   FutureBuilder<List<CovidState>>(
+              future: fetchCovidState(http.Client(), screenargs.state_name),
+              builder: (context, snapshot) {
+                if(snapshot.connectionState != ConnectionState.done) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                if(snapshot.hasError) {
+                  return     Text("${snapshot.error}"); }
+                covidCases= snapshot.data ?? [];
+                 List<charts.Series<CovidState, String>> series = [
+      charts.Series(
+          id: "New Cases in ${screenargs.county} County",
+          data: covidCases,
+          domainFn: (CovidState series, _) => series.casedate,
+          measureFn: (CovidState series, _) => series.deaths,
+
+    )];
+
+    return Container(
+      height: 400,
+      padding: EdgeInsets.all(20),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: <Widget>[
+              Text(
+                "All Deaths in ${screenargs.state}",
+                style: Theme.of(context).textTheme.body2,
+              ),
+              Expanded(
+                child: charts.BarChart(series, animate: true,
+                domainAxis: charts.OrdinalAxisSpec(
+                              renderSpec: charts.SmallTickRendererSpec(labelRotation: 60),
+              )
+              )
+              )],
+          ),
+        ),
+      ),
+    );
+              }));
+          }
+                      
+                    }
+class CovidStatesDeath extends StatelessWidget {
+  List<CovidState> covidCases ;
+
+
+  CovidStatesDeath({Key key, @required this.covidCases}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+
+    final ScreenData screenargs= ModalRoute.of(context).settings.arguments;
+    return
+      new Scaffold(
+          appBar: AppBar(title: Text("${screenargs.state} Covid status"),),
+          body:   FutureBuilder<List<CovidState>>(
+              future: fetchCovidState(http.Client(), screenargs.state_name),
+              builder: (context, snapshot) {
+                if(snapshot.connectionState != ConnectionState.done) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                if(snapshot.hasError) {
+                  return     Text("${snapshot.error}"); }
+                covidCases= snapshot.data ?? [];
+                 List<charts.Series<CovidState, String>> series = [
+      charts.Series(
+          id: "New Cases in ${screenargs.county} County",
+          data: covidCases,
+          domainFn: (CovidState series, _) => series.casedate,
+          measureFn: (CovidState series, _) => series.newDeaths,
+
+    )];
+
+    return Container(
+      height: 400,
+      padding: EdgeInsets.all(20),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: <Widget>[
+              Text(
+                "New Deaths in ${screenargs.state}",
+                style: Theme.of(context).textTheme.body2,
+              ),
+              Expanded(
+                child: charts.BarChart(series, animate: true,
+                domainAxis: charts.OrdinalAxisSpec(
+                              renderSpec: charts.SmallTickRendererSpec(labelRotation: 60),
+              )
+              )
+              )],
+          ),
+        ),
+      ),
+    );
+              }));
+          }
+                      
+                    }
 Future<List<CovidState>> fetchCovidState(http.Client client, String _state_name) async {
   String link = "https://raw.githubusercontent.com/yzhou2000/covid_json/master/us_states_covid.json";
 

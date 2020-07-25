@@ -130,7 +130,7 @@ class MyAppState extends State<MyApp> {
                         RaisedButton(
                           onPressed: () {
                             Navigator.push(context,
-                                MaterialPageRoute(builder: (context) => CovidCountysList(),
+                                MaterialPageRoute(builder: (context) => CountyHome(),
                                   settings: RouteSettings(
                                     arguments: ScreenData(snapshot.data.county, snapshot.data.st_code, snapshot.data.msa, snapshot.data.st_name),
                                   ),
@@ -144,7 +144,7 @@ class MyAppState extends State<MyApp> {
                         RaisedButton(
                           onPressed: () {
                             Navigator.push(context,
-                                MaterialPageRoute(builder: (context) => CovidStatesList(),
+                                MaterialPageRoute(builder: (context) => StateHome(),
                                   settings: RouteSettings(
                                     arguments: ScreenData(snapshot.data.county, snapshot.data.st_code, snapshot.data.msa, snapshot.data.st_name),
                                   ),
@@ -158,14 +158,14 @@ class MyAppState extends State<MyApp> {
                         RaisedButton(
                           onPressed: () {
                             Navigator.push(context,
-                                MaterialPageRoute(builder: (context) => CovidMetrosList(),
+                                MaterialPageRoute(builder: (context) => MetroHome(),
                                   settings: RouteSettings(
                                     arguments: ScreenData(snapshot.data.county, snapshot.data.st_code, snapshot.data.msa, snapshot.data.st_name),
                                   ),
                                 )
                             );
                           },
-                          child: Text("Check COVID-19 cases in ${snapshot.data.msa} metra area",
+                          child: Text("Check COVID-19 cases in ${snapshot.data.msa}",
                             style: TextStyle(fontSize: 14.0,),),
                         ),
                       ],
